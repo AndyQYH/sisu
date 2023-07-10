@@ -1,0 +1,128 @@
+[
+    {
+        "model": "enpApi.playsession",
+        "pk": 1,
+        "fields":{
+            "employer": 1,
+            "player":"andy.qin@sisuvr.com",
+            "module_id": "1",
+            "date_taken":"2023-06-15",
+            "score": 5,
+            "success": true,
+            "time_taken": 20
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 2,
+        "fields":{
+            "employer": 1,
+            "player":"andy.qin@sisuvr.com",
+            "module_id": "2",
+            "date_taken":"2023-06-15",
+            "score": 10,
+            "success": true,
+            "time_taken": 16
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 3,
+        "fields":{
+            "employer": 1,
+            "player":"andy.qin@sisuvr.com",
+            "module_id": "3",
+            "date_taken":"2023-06-15",
+            "score": 7,
+            "success": true,
+            "time_taken": 10
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 4,
+        "fields":{
+            "employer": 1,
+            "player":"qinandy2001@gmail.com",
+            "module_id": "1",
+            "date_taken":"2023-06-23",
+            "score": 9,
+            "success": true,
+            "time_taken": 30
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 5,
+        "fields":{
+            "employer": 1,
+            "player":"qinandy2001@gmail.com",
+            "module_id": "2",
+            "date_taken":"2023-06-23",
+            "score": 7,
+            "success": true,
+            "time_taken": 25
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 6,
+        "fields":{
+            "employer": 1,
+            "player":"qinandy2001@gmail.com",
+            "module_id": "3",
+            "date_taken":"2023-06-23",
+            "score": 5,
+            "success": true,
+            "time_taken": 15
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 7,
+        "fields":{
+            "employer": 1,
+            "player":"yqin2@scu.edu",
+            "module_id": "1",
+            "date_taken":"2023-06-30",
+            "score": 5,
+            "success": true,
+            "time_taken": 13
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 8,
+        "fields":{
+            "employer": 1,
+            "player":"yqin2@scu.edu",
+            "module_id": "2",
+            "date_taken":"2023-06-30",
+            "score": 6,
+            "success": true,
+            "time_taken": 35
+        }
+        
+    },
+    {
+        "model": "enpApi.playsession",
+        "pk": 9,
+        "fields":{
+            "employer": 1,
+            "player":"yqin2@scu.edu",
+            "module_id": "3",
+            "date_taken":"2023-06-30",
+            "score": 6,
+            "success": true,
+            "time_taken": 22
+        }
+        
+    }
+]

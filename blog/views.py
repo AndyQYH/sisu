@@ -627,7 +627,7 @@ def check_mandatory_completion(player, play_sessions):
 
     company_mandatory_modules = player.employer.mandatory_modules.all()
     mandatory_modules_list = []
-
+    print('module list: ', company_mandatory_modules)
     for module in company_mandatory_modules:
         mandatory_modules_list.append(module.module_id)
 
@@ -1035,107 +1035,109 @@ def portal_ethical_report(request, pk):
             return render(request, 'portal/ethical-report.html', {"completedTraining": False})
 
 
-        # supervisor can view aggregated report
-        if player.supervisor and pk == "team_report":
-            # filter team and aggregate data
-            thisTeamMembers = SupervisorMapping.objects.filter(supervisor=request.user).values_list('employee', flat=True)
-            queryset = EthicalFeedback.objects.filter(user__in=thisTeamMembers)
+        # supervisor can view aggregated report; non-supervisors and admins do not have the options
+        if  pk == "team_report" :
+            if player.supervisor and not player.admin:
+                # filter team and aggregate data
+                thisTeamMembers = SupervisorMapping.objects.filter(supervisor=request.user).values_list('employee', flat=True)
+                queryset = EthicalFeedback.objects.filter(user__in=thisTeamMembers)
 
-            # calulate average emotion value for each scene
-            feedbackCountInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: count of feedbacks}}
-            emotionSumInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: sum of employees' emotion}}
-            behaviorCountInModule = defaultdict(lambda: defaultdict(dict)) # {module nb: {hostile: {scene nb: count}, ...}}
-            for entry in queryset:
-                emotionSumInModule[entry.module_id][entry.scene] += entry.emotion
-                feedbackCountInModule[entry.module_id][entry.scene] += 1
-                behaviorCountInModule[entry.module_id][entry.behavior_id.description][entry.scene] = behaviorCountInModule[entry.module_id][entry.behavior_id.description].get(entry.scene, 0) + 1
+                # calulate average emotion value for each scene
+                feedbackCountInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: count of feedbacks}}
+                emotionSumInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: sum of employees' emotion}}
+                behaviorCountInModule = defaultdict(lambda: defaultdict(dict)) # {module nb: {hostile: {scene nb: count}, ...}}
+                for entry in queryset:
+                    emotionSumInModule[entry.module_id][entry.scene] += entry.emotion
+                    feedbackCountInModule[entry.module_id][entry.scene] += 1
+                    behaviorCountInModule[entry.module_id][entry.behavior_id.description][entry.scene] = behaviorCountInModule[entry.module_id][entry.behavior_id.description].get(entry.scene, 0) + 1
 
-            # aggregate data by module
-            moduleCnt = len(emotionSumInModule)
-            avgEmotionsInModule = {}
-            employeeCntInModule = {}
-            sceneLabelsInModule = {}
-            rolesInModule = {}
-            isMandatoryInModule = {}
-            screenshotsInModule = {}
-            npcsInModule = {}
-            scriptsInModule = {}
+                # aggregate data by module
+                moduleCnt = len(emotionSumInModule)
+                avgEmotionsInModule = {}
+                employeeCntInModule = {}
+                sceneLabelsInModule = {}
+                rolesInModule = {}
+                isMandatoryInModule = {}
+                screenshotsInModule = {}
+                npcsInModule = {}
+                scriptsInModule = {}
+                datasets = defaultdict(dict)
 
-            datasets = defaultdict(dict)
+                for moduleId, emotionSum in emotionSumInModule.items():
+                    sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
+                    sceneCnt = sceneInfoQueries.count() # get scene count from scene info table
 
-            for moduleId, emotionSum in emotionSumInModule.items():
-                sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
-                sceneCnt = sceneInfoQueries.count() # get scene count from scene info table
+                    employeeCnt = queryset.filter(module_id=moduleId).order_by().values_list('user').distinct().count()
 
-                employeeCnt = queryset.filter(module_id=moduleId).order_by().values_list('user').distinct().count()
+                    avgEmotions = [0] * sceneCnt
 
-                avgEmotions = [0] * sceneCnt
+                    behaviorCount = behaviorCountInModule[moduleId]
 
-                behaviorCount = behaviorCountInModule[moduleId]
+                    for behavior in behaviorCount:
+                        sceneData = [0] * sceneCnt
+                        for scene, emoSum in emotionSum.items():
+                            behaviorPercentage = behaviorCount[behavior].get(scene, 0) / feedbackCountInModule[moduleId][scene]
+                            avgEmotion = emoSum / feedbackCountInModule[moduleId][scene]
 
-                for behavior in behaviorCount:
-                    sceneData = [0] * sceneCnt
-                    for scene, emoSum in emotionSum.items():
-                        behaviorPercentage = behaviorCount[behavior].get(scene, 0) / feedbackCountInModule[moduleId][scene]
-                        avgEmotion = emoSum / feedbackCountInModule[moduleId][scene]
+                            avgEmotions[scene-1] = math.floor(avgEmotion*10)/10
+                            sceneData[scene-1] = avgEmotion * behaviorPercentage
 
-                        avgEmotions[scene-1] = math.floor(avgEmotion*10)/10
-                        sceneData[scene-1] = avgEmotion * behaviorPercentage
-
-                    datasets[behavior][moduleId] = sceneData[:]
-
-
-                employeeCntInModule[moduleId] = int(employeeCnt)
-                avgEmotionsInModule[moduleId] = avgEmotions[:]
-                sceneLabelsInModule[moduleId] = list(range(1, sceneCnt+1))
+                        datasets[behavior][moduleId] = sceneData[:]
 
 
-                roles = {}
-                isMandatory = {}
-                screenshots = {}
-                npcs = {}
-                scripts = {}
+                    employeeCntInModule[moduleId] = int(employeeCnt)
+                    avgEmotionsInModule[moduleId] = avgEmotions[:]
+                    sceneLabelsInModule[moduleId] = list(range(1, sceneCnt+1))
 
-                for obj in sceneInfoQueries:
-                    roles[obj.scene-1] = obj.player_role
-                    isMandatory[obj.scene-1] = obj.is_mandatory
-                    screenshots[obj.scene-1] = obj.ethical_screenshot
-                    npcs[obj.scene-1] = obj.ethical_npc_name
-                    scripts[obj.scene-1] = obj.ethical_script
 
-                rolesInModule[moduleId] = roles
-                isMandatoryInModule[moduleId] = isMandatory
-                screenshotsInModule[moduleId] = screenshots
-                npcsInModule[moduleId] = npcs
-                scriptsInModule[moduleId] = scripts
+                    roles = {}
+                    isMandatory = {}
+                    screenshots = {}
+                    npcs = {}
+                    scripts = {}
 
-            modules = sorted(list(emotionSumInModule.keys()))
+                    for obj in sceneInfoQueries:
+                        roles[obj.scene-1] = obj.player_role
+                        isMandatory[obj.scene-1] = obj.is_mandatory
+                        screenshots[obj.scene-1] = obj.ethical_screenshot
+                        npcs[obj.scene-1] = obj.ethical_npc_name
+                        scripts[obj.scene-1] = obj.ethical_script
 
-            context = {
-                'isAggregatedReport': pk == "team_report",
-                'completedTraining': True,
-                'player': player, 
-                'modules': modules,
-                'labels': sceneLabelsInModule,
-                'hostile_dataset': datasets['hostile'],
-                'passive_dataset': datasets['passive'],
-                'confident_dataset': datasets['confident'],
-                'hostile_color': getColor('hostile'),
-                'passive_color': getColor('passive'),
-                'confident_color': getColor('confident'),
-                'roles': rolesInModule,
-                'is_mandatory_scene': isMandatoryInModule,
-                'avgEmotions': avgEmotionsInModule,
-                'employeeCnt': employeeCntInModule,
-                'screenshots': screenshotsInModule,
-                'npcs': npcsInModule,
-                'scripts': scriptsInModule,
+                    rolesInModule[moduleId] = roles
+                    isMandatoryInModule[moduleId] = isMandatory
+                    screenshotsInModule[moduleId] = screenshots
+                    npcsInModule[moduleId] = npcs
+                    scriptsInModule[moduleId] = scripts
 
-            }
+                modules = sorted(list(emotionSumInModule.keys()))
 
+                context = {
+                    'isAggregatedReport': pk == "team_report",
+                    'completedTraining': True,
+                    'player': player, 
+                    'modules': modules,
+                    'labels': sceneLabelsInModule,
+                    'hostile_dataset': datasets['hostile'],
+                    'passive_dataset': datasets['passive'],
+                    'confident_dataset': datasets['confident'],
+                    'hostile_color': getColor('hostile'),
+                    'passive_color': getColor('passive'),
+                    'confident_color': getColor('confident'),
+                    'roles': rolesInModule,
+                    'is_mandatory_scene': isMandatoryInModule,
+                    'avgEmotions': avgEmotionsInModule,
+                    'employeeCnt': employeeCntInModule,
+                    'screenshots': screenshotsInModule,
+                    'npcs': npcsInModule,
+                    'scripts': scriptsInModule,
+
+                }
+            else:
+                #redirect non-supervisors and supervisors to my_report route instead
+                return redirect("ethical_report", pk = "my_report")
         # individual report
         elif pk == "my_report":
-
+            
             username = request.user.username
 
             scenesInModules = {}
@@ -1146,81 +1148,197 @@ def portal_ethical_report(request, pk):
             screenshotsInModule = {}
             npcsInModule = {}
             scriptsInModule = {}
+            
+            
+            # when the user is either a supervisor or non-supervisor and access my_report
+            if not player.admin:
+                for field in play_sessions.all():
+                    if not field.success:
+                        continue
+                        
+                    moduleId = field.module_id
 
-            for field in play_sessions.all():
-                if not field.success:
-                    continue
+                    # fetch ethical feedbacks in this module
+                    scenes = []
+                    emotions = []
+                    behaviors = []
+
+                    queryset = EthicalFeedback.objects.filter(user__username=username).filter(module_id=moduleId)
+
+                    for column in queryset:
+                        scenes.append(column.scene)
+                        emotions.append(column.emotion)
+                        behaviors.append(column.behavior_id.description)
                     
-                moduleId = field.module_id
+                    # sort according to scene id
+                    sortedData = list(sorted(zip(scenes, emotions, behaviors)))
+                    scenes = list(map(lambda x: x[0], sortedData))
+                    emotions = list(map(lambda x: x[1], sortedData))
+                    behaviors = list(map(lambda x: x[2], sortedData))
+                    
+                    scenesIdices = {}
+                    for i, scene in enumerate(scenes):
+                        scenesIdices[scene-1] = i
 
-                # fetch ethical feedbacks in this module
-                scenes = []
-                emotions = []
-                behaviors = []
+                    # fetch player roles in this module
+                    sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
+                    roles = {}
+                    screenshots = {}
+                    npcs = {}
+                    scripts = {}
+                    for obj in sceneInfoQueries:
+                        roles[obj.scene-1] = obj.player_role
+                        screenshots[obj.scene-1] = obj.ethical_screenshot
+                        npcs[obj.scene-1] = obj.ethical_npc_name
+                        scripts[obj.scene-1] = obj.ethical_script
 
-                queryset = EthicalFeedback.objects.filter(user__username=username).filter(module_id=moduleId)
+                    # store scene, emotion, behaviors, roles by module
+                    scenesInModules[moduleId] = scenes
+                    sceneIndicesInModules[moduleId] = scenesIdices
+                    emotionsInModules[moduleId] = emotions
+                    behaviorsInModules[moduleId] = behaviors
+                    rolesInModule[moduleId] = roles
+                    screenshotsInModule[moduleId] = screenshots
+                    npcsInModule[moduleId] = npcs
+                    scriptsInModule[moduleId] = scripts
 
-                for column in queryset:
-                    scenes.append(column.scene)
-                    emotions.append(column.emotion)
-                    behaviors.append(column.behavior_id.description)
+                modules = sorted(list(rolesInModule.keys()))
+
+                # colors for bars
+                colors = []
+                for b in behaviors:
+                    colors.append(getColor(b))
+
+                context = {
+                    'isAggregatedReport': pk == "team_report",
+                    'completedTraining': True,
+                    'player': player,
+                    'modules': modules,
+                    'roles': rolesInModule,
+                    'scenes': scenesInModules,
+                    'scenesIdices': sceneIndicesInModules, 
+                    'emotions': emotionsInModules, 
+                    'behaviors': behaviorsInModules, 
+                    'hostile_color': getColor('hostile'),
+                    'passive_color': getColor('passive'),
+                    'confident_color': getColor('confident'),
+                    'screenshots': screenshotsInModule,
+                    'npcs': npcsInModule,
+                    'scripts': scriptsInModule,
+                }
+            else:
+                # filter team and aggregate data
+                thisCompanyMembers = Player.objects.filter(employer=player.employer).values_list('user', flat=True)
+                print(thisCompanyMembers)
+                queryset = EthicalFeedback.objects.filter(user__in=thisCompanyMembers)
+                print(queryset)
+                thisTeamMembers = SupervisorMapping.objects.filter(supervisor=request.user).values_list('employee', flat=True)
+                #queryset = EthicalFeedback.objects.filter(user__in=thisTeamMembers)
+
+                # calulate average emotion value for each scene
+                feedbackCountInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: count of feedbacks}}
+                emotionSumInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: sum of employees' emotion}}
+                behaviorCountInModule = defaultdict(lambda: defaultdict(dict)) # {module nb: {hostile: {scene nb: count}, ...}}
+                behaviorCountof = {}
                 
-                # sort according to scene id
-                sortedData = list(sorted(zip(scenes, emotions, behaviors)))
-                scenes = list(map(lambda x: x[0], sortedData))
-                emotions = list(map(lambda x: x[1], sortedData))
-                behaviors = list(map(lambda x: x[2], sortedData))
+                for entry in queryset:
+                    emotionSumInModule[entry.module_id][entry.scene] += entry.emotion
+                    feedbackCountInModule[entry.module_id][entry.scene] += 1
+                    behaviorCountInModule[entry.module_id][entry.behavior_id.description][entry.scene] = behaviorCountInModule[entry.module_id][entry.behavior_id.description].get(entry.scene, 0) + 1
+                    behaviorCountof[entry.behavior_id.description] = 0
+                print('behavior count: ')
+                print(behaviorCountof)
+                # aggregate data by module
+                print("emotion sum:", emotionSumInModule)
                 
-                scenesIdices = {}
-                for i, scene in enumerate(scenes):
-                    scenesIdices[scene-1] = i
+                # aggregate data by module
+                moduleCnt = len(emotionSumInModule)
+                
+                avgEmotionsInModule = {}
+                employeeCntInModule = {}
+                LabelsInChart = {'pie':[]}
+                rolesInModule = {}
+                isMandatoryInModule = {}
+                screenshotsInModule = {}
+                npcsInModule = {}
+                scriptsInModule = {}
+                datasets = defaultdict(dict)
+                
+                for moduleId, emotionSum in emotionSumInModule.items():
+                    sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
+                    sceneCnt = sceneInfoQueries.count() # get scene count from scene info table
+                    if sceneCnt == 0:
+                        continue
+                    employeeCnt = queryset.filter(module_id=moduleId).order_by().values_list('user').distinct().count()
 
-                # fetch player roles in this module
-                sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
-                roles = {}
-                screenshots = {}
-                npcs = {}
-                scripts = {}
-                for obj in sceneInfoQueries:
-                    roles[obj.scene-1] = obj.player_role
-                    screenshots[obj.scene-1] = obj.ethical_screenshot
-                    npcs[obj.scene-1] = obj.ethical_npc_name
-                    scripts[obj.scene-1] = obj.ethical_script
+                    avgEmotions = [0] * sceneCnt
 
-                # store scene, emotion, behaviors, roles by module
-                scenesInModules[moduleId] = scenes
-                sceneIndicesInModules[moduleId] = scenesIdices
-                emotionsInModules[moduleId] = emotions
-                behaviorsInModules[moduleId] = behaviors
-                rolesInModule[moduleId] = roles
-                screenshotsInModule[moduleId] = screenshots
-                npcsInModule[moduleId] = npcs
-                scriptsInModule[moduleId] = scripts
+                    behaviorCount = behaviorCountInModule[moduleId]
 
-            modules = sorted(list(rolesInModule.keys()))
+                    for behavior in behaviorCount:
+                        
+                        sceneData = [0] * sceneCnt
+                        for scene, emoSum in emotionSum.items():
+                            #print('scene: ' + str(scene))
+                            behaviorCountofInScene = behaviorCount[behavior].get(scene, 0)
+                            #print('count: ' + str(behaviorCountofInScene))
+                            behaviorPercentage = behaviorCountofInScene / feedbackCountInModule[moduleId][scene]
+                            avgEmotion = emoSum / feedbackCountInModule[moduleId][scene]
 
-            # colors for bars
-            colors = []
-            for b in behaviors:
-                colors.append(getColor(b))
+                            avgEmotions[scene-1] = math.floor(avgEmotion*10)/10
+                            sceneData[scene-1] = avgEmotion * behaviorPercentage
+                            behaviorCountof[behavior] += behaviorCountofInScene
 
-            context = {
-                'isAggregatedReport': pk == "team_report",
-                'completedTraining': True,
-                'player': player,
-                'modules': modules,
-                'roles': rolesInModule,
-                'scenes': scenesInModules,
-                'scenesIdices': sceneIndicesInModules, 
-                'emotions': emotionsInModules, 
-                'behaviors': behaviorsInModules, 
-                'hostile_color': getColor('hostile'),
-                'passive_color': getColor('passive'),
-                'confident_color': getColor('confident'),
-                'screenshots': screenshotsInModule,
-                'npcs': npcsInModule,
-                'scripts': scriptsInModule,
-            }
+                        datasets[behavior][moduleId] = sceneData[:]
+                        
+
+                    employeeCntInModule[moduleId] = int(employeeCnt)
+                    avgEmotionsInModule[moduleId] = avgEmotions[:]
+
+
+                    roles = {}
+                    isMandatory = {}
+                    screenshots = {}
+                    npcs = {}
+                    scripts = {}
+
+                    for obj in sceneInfoQueries:
+                        roles[obj.scene-1] = obj.player_role
+                        isMandatory[obj.scene-1] = obj.is_mandatory
+                        screenshots[obj.scene-1] = obj.ethical_screenshot
+                        npcs[obj.scene-1] = obj.ethical_npc_name
+                        scripts[obj.scene-1] = obj.ethical_script
+
+                    rolesInModule[moduleId] = roles
+                    isMandatoryInModule[moduleId] = isMandatory
+                    screenshotsInModule[moduleId] = screenshots
+                    npcsInModule[moduleId] = npcs
+                    scriptsInModule[moduleId] = scripts
+
+                modules = sorted(list(emotionSumInModule.keys()))
+                print(behaviorCountof)
+
+                context = {
+                    'isAggregatedReport': pk == "team_report",
+                    'completedTraining': True,
+                    'player': player, 
+                    'modules': modules,
+                    'labels': LabelsInChart,
+                    'hostile_dataset': datasets['hostile'],
+                    'passive_dataset': datasets['passive'],
+                    'confident_dataset': datasets['confident'],
+                    'hostile_color': getColor('hostile'),
+                    'passive_color': getColor('passive'),
+                    'confident_color': getColor('confident'),
+                    'roles': rolesInModule,
+                    'is_mandatory_scene': isMandatoryInModule,
+                    'avgEmotions': avgEmotionsInModule,
+                    'employeeCnt': employeeCntInModule,
+                    'screenshots': screenshotsInModule,
+                    'npcs': npcsInModule,
+                    'scripts': scriptsInModule,
+                    'behaviorCountOf': behaviorCountof
+                }
 
         return render(request, 'portal/ethical-report.html', context)
     else:

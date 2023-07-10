@@ -31,7 +31,7 @@ class Player(models.Model):
     full_name = models.CharField(max_length=60)
     supervisor = models.BooleanField(default=False)
     admin = models.BooleanField(default=False)
-    registration_type = models.CharField(default='', max_length=16)
+    registration_type = models.CharField(default='Respondent', max_length=16)
     has_signed = models.BooleanField(default=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.DO_NOTHING, null=True)
     is_provisional = models.BooleanField(default=True)
@@ -182,3 +182,7 @@ class EthicalFeedback(models.Model):
     emotion = models.IntegerField(blank=False)
     behavior_id = models.ForeignKey(Behavior, on_delete=models.DO_NOTHING, blank=False)
     timestamp = models.DateTimeField(auto_now_add=True, null=True)
+    
+    class Meta:
+        unique_together = (("user", "module_id", "scene"),)
+    
