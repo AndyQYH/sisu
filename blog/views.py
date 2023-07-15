@@ -23,6 +23,7 @@ from django.contrib import auth
 from ipware import get_client_ip
 from django.template import Context
 import re, random, math
+import copy
 from django.db.models import Q
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -1017,8 +1018,8 @@ def portal_certificate(request):
 
 
 def getColor(behavior):
-    colorDict = {"hostile": 'rgba(196, 106, 108, 0.75)',
-                 "passive": 'rgba(204, 155, 63, 0.75)', "confident": 'rgba(120, 158, 93, 0.75)'}
+    colorDict = {"hostile": 'rgba(196, 106, 108, 0.9)',
+                 "passive": 'rgba(204, 155, 63, 0.9)', "confident": 'rgba(120, 158, 93, 0.9)'}
 
     return colorDict[behavior]
 
@@ -1039,6 +1040,7 @@ def portal_ethical_report(request, pk):
         if  pk == "team_report" :
             if player.supervisor and not player.admin:
                 # filter team and aggregate data
+                print('SUPERVISOR !')
                 thisTeamMembers = SupervisorMapping.objects.filter(supervisor=request.user).values_list('employee', flat=True)
                 queryset = EthicalFeedback.objects.filter(user__in=thisTeamMembers)
 
@@ -1110,6 +1112,9 @@ def portal_ethical_report(request, pk):
                     scriptsInModule[moduleId] = scripts
 
                 modules = sorted(list(emotionSumInModule.keys()))
+                print(emotionSumInModule)
+                print(modules)
+                print(len(thisTeamMembers))
 
                 context = {
                     'isAggregatedReport': pk == "team_report",
@@ -1130,8 +1135,9 @@ def portal_ethical_report(request, pk):
                     'screenshots': screenshotsInModule,
                     'npcs': npcsInModule,
                     'scripts': scriptsInModule,
-
+                    'moduleCnt':moduleCnt 
                 }
+               
             else:
                 #redirect non-supervisors and supervisors to my_report route instead
                 return redirect("ethical_report", pk = "my_report")
@@ -1148,7 +1154,6 @@ def portal_ethical_report(request, pk):
             screenshotsInModule = {}
             npcsInModule = {}
             scriptsInModule = {}
-            
             
             # when the user is either a supervisor or non-supervisor and access my_report
             if not player.admin:
@@ -1239,24 +1244,32 @@ def portal_ethical_report(request, pk):
                 feedbackCountInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: count of feedbacks}}
                 emotionSumInModule = defaultdict(lambda: defaultdict(int)) # {module nb: {scene nb: sum of employees' emotion}}
                 behaviorCountInModule = defaultdict(lambda: defaultdict(dict)) # {module nb: {hostile: {scene nb: count}, ...}}
+                playerRolesBehaviors = defaultdict(lambda: defaultdict(int)) # {module nb: {hostile: {scene nb: count}, ...}}
                 behaviorCountof = {}
+                playerRoleCountof = defaultdict(int)
+                playerRoleCountPercent = defaultdict(list)
                 
                 for entry in queryset:
+                    player_role = SceneInfo.objects.filter(module_id=entry.module_id, scene=entry.scene).values_list('player_role', flat=True)[0]
+                    print(player_role)
+                    
+                    
+                    playerRolesBehaviors[entry.behavior_id.description][player_role] += 1 
                     emotionSumInModule[entry.module_id][entry.scene] += entry.emotion
                     feedbackCountInModule[entry.module_id][entry.scene] += 1
                     behaviorCountInModule[entry.module_id][entry.behavior_id.description][entry.scene] = behaviorCountInModule[entry.module_id][entry.behavior_id.description].get(entry.scene, 0) + 1
                     behaviorCountof[entry.behavior_id.description] = 0
-                print('behavior count: ')
-                print(behaviorCountof)
+                
                 # aggregate data by module
-                print("emotion sum:", emotionSumInModule)
+                # print("emotion sum:", emotionSumInModule)
                 
                 # aggregate data by module
                 moduleCnt = len(emotionSumInModule)
+                sceneInfoPlayerRoles = SceneInfo.objects.all().values('player_role')
                 
                 avgEmotionsInModule = {}
                 employeeCntInModule = {}
-                LabelsInChart = {'pie':[]}
+                LabelsInChart = {'pie':list(behaviorCountof.keys()), "bar":[playerRole['player_role'] for playerRole in sceneInfoPlayerRoles.distinct()]}
                 rolesInModule = {}
                 isMandatoryInModule = {}
                 screenshotsInModule = {}
@@ -1264,59 +1277,34 @@ def portal_ethical_report(request, pk):
                 scriptsInModule = {}
                 datasets = defaultdict(dict)
                 
-                for moduleId, emotionSum in emotionSumInModule.items():
-                    sceneInfoQueries = SceneInfo.objects.filter(module_id=moduleId)
-                    sceneCnt = sceneInfoQueries.count() # get scene count from scene info table
-                    if sceneCnt == 0:
-                        continue
-                    employeeCnt = queryset.filter(module_id=moduleId).order_by().values_list('user').distinct().count()
-
-                    avgEmotions = [0] * sceneCnt
-
-                    behaviorCount = behaviorCountInModule[moduleId]
-
-                    for behavior in behaviorCount:
+                print("player roles: ")
+                print(sceneInfoPlayerRoles)
+                print("Labels: ")
+                print(LabelsInChart)
+                print('emotion sum: ')
+                print(emotionSumInModule)
+                playerRolesBehaviors_copy = copy.deepcopy(playerRolesBehaviors)
+                for behavior, behaviorCnt in playerRolesBehaviors.items():
+                    print(behaviorCnt)
+                    playerRolesBehaviors_copy[behavior] = list(dict(playerRolesBehaviors[behavior]).values())
+                    behaviorCountof[behavior] += sum(behaviorCnt.values())
+                    
+                    for player_role, count in behaviorCnt.items():
+                        playerRoleCountof[player_role] += count
                         
-                        sceneData = [0] * sceneCnt
-                        for scene, emoSum in emotionSum.items():
-                            #print('scene: ' + str(scene))
-                            behaviorCountofInScene = behaviorCount[behavior].get(scene, 0)
-                            #print('count: ' + str(behaviorCountofInScene))
-                            behaviorPercentage = behaviorCountofInScene / feedbackCountInModule[moduleId][scene]
-                            avgEmotion = emoSum / feedbackCountInModule[moduleId][scene]
-
-                            avgEmotions[scene-1] = math.floor(avgEmotion*10)/10
-                            sceneData[scene-1] = avgEmotion * behaviorPercentage
-                            behaviorCountof[behavior] += behaviorCountofInScene
-
-                        datasets[behavior][moduleId] = sceneData[:]
-                        
-
-                    employeeCntInModule[moduleId] = int(employeeCnt)
-                    avgEmotionsInModule[moduleId] = avgEmotions[:]
-
-
-                    roles = {}
-                    isMandatory = {}
-                    screenshots = {}
-                    npcs = {}
-                    scripts = {}
-
-                    for obj in sceneInfoQueries:
-                        roles[obj.scene-1] = obj.player_role
-                        isMandatory[obj.scene-1] = obj.is_mandatory
-                        screenshots[obj.scene-1] = obj.ethical_screenshot
-                        npcs[obj.scene-1] = obj.ethical_npc_name
-                        scripts[obj.scene-1] = obj.ethical_script
-
-                    rolesInModule[moduleId] = roles
-                    isMandatoryInModule[moduleId] = isMandatory
-                    screenshotsInModule[moduleId] = screenshots
-                    npcsInModule[moduleId] = npcs
-                    scriptsInModule[moduleId] = scripts
-
+                for behavior, behaviorCnt in playerRolesBehaviors_copy.items():
+                    print(behaviorCnt)
+                    for i in range(len(behaviorCnt)):
+                        playerRolesBehaviors_copy[behavior][i] = round(playerRolesBehaviors_copy[behavior][i] / list(playerRoleCountof.values())[i] * 10, 2) 
+                playerRolesBehaviors_copy = dict(playerRolesBehaviors_copy)    
+                behaviorCountof = dict(behaviorCountof)
+                playerRoleCountof = dict(playerRoleCountof)      
                 modules = sorted(list(emotionSumInModule.keys()))
+                print("behavior count for each player role:", playerRolesBehaviors)
+                print("behavior count for each player role copy:", playerRolesBehaviors_copy)
+                print(playerRoleCountof)
                 print(behaviorCountof)
+                print(playerRoleCountPercent)
 
                 context = {
                     'isAggregatedReport': pk == "team_report",
@@ -1324,20 +1312,20 @@ def portal_ethical_report(request, pk):
                     'player': player, 
                     'modules': modules,
                     'labels': LabelsInChart,
-                    'hostile_dataset': datasets['hostile'],
-                    'passive_dataset': datasets['passive'],
-                    'confident_dataset': datasets['confident'],
                     'hostile_color': getColor('hostile'),
                     'passive_color': getColor('passive'),
                     'confident_color': getColor('confident'),
-                    'roles': rolesInModule,
-                    'is_mandatory_scene': isMandatoryInModule,
-                    'avgEmotions': avgEmotionsInModule,
-                    'employeeCnt': employeeCntInModule,
+                    #'roles': rolesInModule,
+                    #'is_mandatory_scene': isMandatoryInModule,
+                    #'avgEmotions': avgEmotionsInModule,
+                    #'employeeCnt': employeeCntInModule,
                     'screenshots': screenshotsInModule,
                     'npcs': npcsInModule,
-                    'scripts': scriptsInModule,
-                    'behaviorCountOf': behaviorCountof
+                    #'scripts': scriptsInModule,
+                    'behaviorCountOf': behaviorCountof,
+                    'playerRolesBehaviors': playerRolesBehaviors_copy,
+                    'behaviorCountof':behaviorCountof,
+                    'playerRoleCountof' : playerRoleCountof
                 }
 
         return render(request, 'portal/ethical-report.html', context)
