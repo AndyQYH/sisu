@@ -147,7 +147,17 @@ html {
     border-radius: 4px;
 }
 
+.dataTables_info {
+    position:absolute;
+    margin-top:2em;
+    transform:translate(0, 5px);
+}
 
+#edit-employee-reg_paginate{
+    text-align:center;
+    float:none;
+    margin-top:2em;
+}
 
 
 table.table-sisu-overview {
@@ -273,6 +283,10 @@ tfoot {
     border: 1px solid #C1C7CD;
     border-radius: 4px;
     height: 32px;
+}
+
+.dataTables_filter{
+    
 }
 
 

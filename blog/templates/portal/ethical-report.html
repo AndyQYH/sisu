@@ -111,23 +111,29 @@
                                     var divHeight = $('#report_admin').height();
                                     var divWidth = $('#report_admin').width();
                                     var ratio = divHeight / divWidth;
+                                    document.getElementById("report_admin").style.backgroundColor = '#616b81';
+                                    
+                                    
                                     html2canvas(document.getElementById("report_admin"),{
-                                        scale:1,
+                                        scale:4,
+                                      
                                         scrollX: -window.scrollX,
                                         scrollY: -window.scrollY,
                                         width:document.getElementById("report_admin").clientWidth,
                                         height:document.getElementById("report_admin").clientHeight,
-                                        backgroundColor:'#4e657a'
+                                        removeContainer: true,
+                                        backgroundColor: "rgba(0,0,0,0)"
                                     })
                                     .then((canvas) => {
                                         console.log(canvas);
+                              
                                         const imgData = canvas.toDataURL('image/png');
-                                        const pdf = new jsPDF({format:'letter'});
+                                        const pdf = new jsPDF({orientation:'landscape',format:'letter'});
                                         const imgProps= pdf.getImageProperties(imgData);
                                         const pdfWidth = pdf.internal.pageSize.getWidth();
                                         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                                         const pdfHeight2 = pdf.internal.pageSize.getHeight();
-                                        pdf.setFillColor('#4e657a');
+                                        pdf.setFillColor('#616b81');
                                         pdf.rect(0, 0, pdfWidth, pdfHeight2, 'F');
                                         pdf.addImage(imgData, 'PNG', -1, -1, pdfWidth, pdfHeight);
                                         pdf.rect(0, pdfHeight - 30, pdfWidth, pdfHeight2, 'F');
@@ -139,12 +145,11 @@
                                         tempLink.click();
                                         tempLink.remove();
                                         URL.revokeObjectURL(url)
-                                        console.log(blob)
-                                        console.log(url)
+                                        
                                         //window.open(URL.createObjectURL(blob));
                                         //pdf.save('SISU_REPORT_'+moduleNum+'.pdf');
                                     });
-                                
+                                    document.getElementById("report_admin").style.backgroundColor = '#4e657a';
                                 }
                             </script>
                             
@@ -173,8 +178,7 @@
                                 var behaviorCountof = {{behaviorCountof|safe}}
                                 var playerRoleCountof = {{playerRoleCountof|safe}}
                                 
-                                console.log(labels);
-                                console.log({{modules|safe}});
+                               
                                 // yellow face image list needed on y-axis and in tooltips
                                 var positiveFace = new Image(25,25);
                                 positiveFace.src = '/static/img/icon/positiveFace.png';
@@ -192,7 +196,7 @@
                                
                                 const yellowFacePlugin = {
                                     afterDraw: chart => {
-                                        console.log(chart);
+                                        //console.log(chart);
                                         var xAxis = chart.scales.x;
                                         var yAxis = chart.scales.y;
                                         var faces_height = [chart.scales.y.top + 2*(Math.floor(chart.scales.y.height / 3)), chart.scales.y.top + Math.floor(chart.scales.y.height / 3), chart.scales.y.top];
@@ -206,7 +210,7 @@
                                                 
                                             }
                                         })
-                                        console.log('max length: ' + max_length);
+                                        //console.log('max length: ' + max_length);
                                         yAxis.ticks.forEach((value, index) => {
                                             if (index % 5 == 0) {
                                                 var y = yAxis.getPixelForTick(index);
@@ -268,8 +272,7 @@
                                         },
                                         elements: {
                                             bar: {
-                                                hoverBorderColor: 'rgba(255,255,255, 0.7)',
-                                                hoverBorderWidth: 2
+                                                
                                             }
                                         },
                                         scales: {
@@ -341,10 +344,10 @@
                                 var distinct_behaviors = labels['pie'];
                                 var distinct_behaviors_count = new Array();
                                 distinct_behaviors.forEach((behavior)=>{
-                                    console.log(behavior);
+                                    //console.log(behavior);
                                     distinct_behaviors_count.push(behaviorCountOf[behavior]);
                                 })
-                                console.log(distinct_behaviors_count)
+                                //console.log(distinct_behaviors_count)
             
                                 var data = {
                                     labels:distinct_behaviors,
@@ -473,8 +476,9 @@
                                     var divHeight = $('#report_{{module}}').height();
                                     var divWidth = $('#report_{{module}}').width();
                                     var ratio = divHeight / divWidth;
+                                    document.getElementById("report_{{module}}").style.backgroundColor = '#616b81';
                                     html2canvas(document.getElementById("report_"+moduleNum),{
-                                        scale:1,
+                                        scale:4,
                                         scrollX: -window.scrollX,
                                         scrollY: -window.scrollY,
                                         width:document.getElementById("report_{{module}}").clientWidth,
@@ -482,14 +486,14 @@
                                         backgroundColor:'#4e657a'
                                     })
                                     .then((canvas) => {
-                                        console.log(canvas);
+                                        //console.log(canvas);
                                         const imgData = canvas.toDataURL('image/png');
                                         const pdf = new jsPDF({format:'letter'});
                                         const imgProps= pdf.getImageProperties(imgData);
                                         const pdfWidth = pdf.internal.pageSize.getWidth();
                                         const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
                                         const pdfHeight2 = pdf.internal.pageSize.getHeight();
-                                        pdf.setFillColor('#4e657a');
+                                        pdf.setFillColor('#616b81');
                                         pdf.rect(0, 0, pdfWidth, pdfHeight2, 'F');
                                         pdf.addImage(imgData, 'PNG', -1, -1, pdfWidth, pdfHeight);
                                         pdf.rect(0, pdfHeight - 30, pdfWidth, pdfHeight2, 'F');
@@ -501,12 +505,12 @@
                                         tempLink.click();
                                         tempLink.remove();
                                         URL.revokeObjectURL(url)
-                                        console.log(blob)
-                                        console.log(url)
+                                        //console.log(blob)
+                                        //console.log(url)
                                         //window.open(URL.createObjectURL(blob));
                                         //pdf.save('SISU_REPORT_'+moduleNum+'.pdf');
                                     });
-                                
+                                    document.getElementById("report_{{module}}").style.backgroundColor = '#4e657a';
                                 }
                             </script>
                             <script>

@@ -50,7 +50,7 @@ from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth.password_validation import validate_password
 
-
+from datetime import date
 
 def index(request):
     context = {}
@@ -700,6 +700,8 @@ def portal_register(request):
             emails_vr_supervisor            = request.GET.get('vr_supervisor')
             emails_desktop_nonsupervisor    = request.GET.get('desktop_nonsupervisor')
             emails_desktop_supervisor       = request.GET.get('desktop_supervisor')
+            print('emails_vr_nonsupervisor: ')
+            print(emails_vr_nonsupervisor)
 
             # convert email strings to lists
             emails_vr_nonsupervisor         = split_emails(emails_vr_nonsupervisor)
@@ -913,7 +915,7 @@ def portal_training_dl_trial(request):
 def portal_employee_progress(request):
     if request.user.is_authenticated:
         player = Player.objects.get(user=request.user)
-
+        
         if player.admin:
             # show all players in this company
             players = Player.objects.filter(employer=player.employer)
@@ -946,7 +948,8 @@ def portal_employee_progress(request):
                 'email': player_single.email,
                 'registration': registration_type,
                 'all_modules': len(all_modules),
-                'modules_completed': len(completed_modules)
+                'modules_completed': len(completed_modules),
+                'date': date.today()
             })
         
         context = {'player': player, 'players_obj': players_obj}
@@ -1018,8 +1021,8 @@ def portal_certificate(request):
 
 
 def getColor(behavior):
-    colorDict = {"hostile": 'rgba(196, 106, 108, 0.9)',
-                 "passive": 'rgba(204, 155, 63, 0.9)', "confident": 'rgba(120, 158, 93, 0.9)'}
+    colorDict = {"hostile": '#FF6464',
+                 "passive": '#FFBE3F', "confident": '#77B447'}
 
     return colorDict[behavior]
 
