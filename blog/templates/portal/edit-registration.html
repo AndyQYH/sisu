@@ -111,23 +111,21 @@
                             </div>
                             
                         </div>
-                        <label style="padding-left: 40px; padding-right: 15px; flex-basis:50%; display:flex; justify-content:flex-end; align-items:center;">
+                        <label id="filter-select"style="padding-left: 40px; padding-right: 15px; flex-basis:50%; display:flex; justify-content:flex-end; align-items:center;">
                             Filter on Registration Type:
-                            <select name="filter-search" id="filter-search">
-                                <option value="">All</option>
-                                <option value="Non-Supervisor">Non-Supervisor</option>
-                                <option value="Supervisor">Supervisor</option>
-                            </select>
+                            
                         </label>
-                        <label style="padding-top: 10px; padding-left: 20px;">
+                        <!-- Commented Out by Andy for New Design -->
+                            <label style="padding-top: 10px; padding-left: 20px;">
                             Showing: 
                             <select name="showing" id="showing">
-                                <option value="">10</option>
-                                <option value="">20</option>
-                                <option value="">All</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="-1">All</option>
                             </select>
                             entries
                         </label>
+                        
                     </div>
 
                     <!-- Page Top Bar End -->
@@ -141,7 +139,7 @@
                                             <tr>
                                                 <th>Name</th>
                                                 <th>Email</th>
-                                                <th>Registration</th>
+                                                <th class="filter-col">Registration</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -156,7 +154,7 @@
                                                 </tr>
                                             {% endfor %}
                                         </tbody>
-                                        <!--
+                                        <!-- Commented Out Due to conflictg with Figma Design: Editted By Andy
                                             <tfoot class="tbl-sisu-header">
                                             <tr>
                                                 <th>Name</th>
