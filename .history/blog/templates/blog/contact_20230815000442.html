@@ -31,7 +31,17 @@
 
     <!-- Global site tag (gtag.js) - Google Analytics -->
     {% include 'components/ga-tracking-code.html' %}
-   
+    <script>
+        /**
+        * The following event is sent when the page loads. You could
+        * wrap the event in a JavaScript function so the event is
+        * sent when the user performs some action.
+        */
+        gtag('event', 'CONTACT_SISU', {
+          'app_name': 'sisu',
+          'screen_name': 'Contact'
+        });
+    </script> 
 </head>
 
 <body>
@@ -263,7 +273,10 @@
             * wrap the event in a JavaScript function so the event is
             * sent when the user performs some action.
             */
-            
+            gtag('event', 'CONTACT_SISU', {
+                'app_name': 'sisu',
+                'screen_name': 'Contact'
+            });
         });
 
         function checkForm() {
@@ -329,7 +342,6 @@
 
         function onSubmit(token) {
             checkForm();
-           
         }
 
     </script>

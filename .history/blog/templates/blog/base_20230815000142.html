@@ -20,6 +20,18 @@
     <!-- Global site tag (gtag.js) - Google Analytics -->
     {% include 'components/ga-tracking-code.html' %}
 
+    <script>
+        /**
+        * The following event is sent when the page loads. You could
+        * wrap the event in a JavaScript function so the event is
+        * sent when the user performs some action.
+        */
+        gtag('event', 'NEWSLETTER_SISU', {
+          'app_name': 'sisu',
+          'screen_name': 'hOME'
+        });
+    </script> 
+
 
     <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
         integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">

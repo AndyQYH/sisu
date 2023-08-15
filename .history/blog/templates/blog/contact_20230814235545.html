@@ -29,9 +29,29 @@
 
     <script src='https://www.google.com/recaptcha/api.js'></script>
 
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-9Z5LETMYLK"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-9Z5LETMYLK');
+    </script>
+    <script>
+        /**
+        * The following event is sent when the page loads. You could
+        * wrap the event in a JavaScript function so the event is
+        * sent when the user performs some action.
+        */
+        gtag('event', 'CONTACT_SISU', {
+          'app_name': 'sisu',
+          'screen_name': 'Contact'
+        });
+    </script> 
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     {% include 'components/ga-tracking-code.html' %}
-   
 </head>
 
 <body>
@@ -258,12 +278,6 @@
         document.getElementById("submitBtn").addEventListener("click", function (event) {
             event.preventDefault();
             checkForm();
-             /**
-            * The following event is sent when the page loads. You could
-            * wrap the event in a JavaScript function so the event is
-            * sent when the user performs some action.
-            */
-            
         });
 
         function checkForm() {
@@ -329,7 +343,6 @@
 
         function onSubmit(token) {
             checkForm();
-           
         }
 
     </script>
