@@ -190,6 +190,90 @@
             document.getElementById("form-contact").submit();
         }
     </script>
+<<<<<<< HEAD
+=======
+    <script>
+        document.getElementById("submitBtn").addEventListener("click", function (event) {
+            event.preventDefault();
+            checkForm();
+             /**
+            * The following event is sent when the page loads. You could
+            * wrap the event in a JavaScript function so the event is
+            * sent when the user performs some action.
+            */
+            
+        });
+
+        function checkForm() {
+            var firstName = document.querySelector('input[name="input-first-name"]');
+            var lastName = document.querySelector('input[name="input-last-name"]');
+            var email = document.querySelector('input[name="input-email"]');
+            var subject = document.querySelector('select[name="input-subject"]');
+            var errorDiv = document.getElementById('error-message');
+            var emailError = document.getElementById('email-error');
+            var firstNameError = document.getElementById('firstname-error');
+            var lastNameError = document.getElementById('lastname-error');
+            var subjectError = document.getElementById('subject-error');
+
+            emailError.style.display = 'none';
+            emailError.innerText = "";
+            firstNameError.style.display = 'none';
+            firstNameError.innerText = "";
+            lastNameError.style.display = 'none';
+            lastNameError.innerText = "";
+            subjectError.style.display = 'none';
+            subjectError.innerText = "";
+            errorDiv.style.display = 'none';
+            errorDiv.innerText = "";
+
+            if (firstName.value == '') {
+                firstNameError.style.display = 'block';
+                firstNameError.innerText = "This field is required.";
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = "Looks like you missed some of the required fields. Please double check the form.";
+            }
+            // add else if
+            if (lastName.value == '') {
+                lastNameError.style.display = 'block';
+                lastNameError.innerText = "This field is required.";
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = "Looks like you missed some of the required fields. Please double check the form.";
+            }
+            // if email is empty or does not contain @
+
+            if (email.value == '' || !email.value.includes('@')) {
+                emailError.style.display = 'block';
+                emailError.innerText = "This field is required / Please add an '@' in the email address.";
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = "Looks like you missed some of the required fields. Please double check the form.";
+            }
+            if (subject.value == '') {
+                subjectError.style.display = 'block';
+                subjectError.innerText = "Please select a subject from the dropdown menu.";
+                errorDiv.style.display = 'block';
+                errorDiv.innerText = "Looks like you missed some of the required fields. Please double check the form.";
+            }
+            if (firstName.value != '' && lastName.value != '' && email.value != '' && email.value.includes('@') && subject.value != '') {
+                errorDiv.style.display = 'none';
+                errorDiv.innerText = "";
+                document.getElementById("popup").style.display = "flex"; // Show popup only if all fields are filled
+                document.getElementById("form-contact").submit(); // Submit the form
+            }
+        }
+
+        document.getElementById("closeBtn").addEventListener("click", function () {
+            document.getElementById("popup").style.display = "none"; // Hide popup
+        });
+
+        function onSubmit(token) {
+            checkForm();
+           
+        }
+
+    </script>
+
+
+>>>>>>> andy-repo
 
 </body>
 

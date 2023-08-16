@@ -1,0 +1,56 @@
+[
+    {
+        "model": "enpApi.player",
+        "pk": 1,
+        "fields":{
+            "email" : "andy.qin@sisuvr.com",
+            "employer": 1,
+            "full_name":"AndySISU",
+            "supervisor": true,
+            "admin" : true,
+            "registration_type": "Complainant",
+            "has_signed": false,
+            "user":1,
+            "is_provisional":false,
+            "creation_date":"2023-06-15",
+            "training_deadline": null
+        }
+        
+    },
+    {
+        "model": "enpApi.player",
+        "pk": 2,
+        "fields":{
+            "email" : "qinandy2001@gmail.com",
+            "employer": 1,
+            "full_name":"AndyQin",
+            "supervisor": true,
+            "admin" : false,
+            "registration_type": "Respondent",
+            "has_signed": false,
+            "user":2,
+            "is_provisional":false,
+            "creation_date":"2023-06-30",
+            "training_deadline": null
+        }
+        
+    },
+    {
+        "model": "enpApi.player",
+        "pk": 3,
+        "fields":{
+            "email" : "yqin2@scu.edu",
+            "employer": 1,
+            "full_name":"AndyKeen",
+            "supervisor": false,
+            "admin" : false,
+            "registration_type": "Witness",
+            "has_signed": false,
+            "user":3,
+            "is_provisional":false,
+            "creation_date":"2023-06-30",
+            "training_deadline": null
+        }
+        
+    }
+]

@@ -44,7 +44,6 @@ class Category(Enum):
       if cat_name == "Miscellaneous":
         return Category.Miscellaneous
     
-
 @python_2_unicode_compatible  
 class Post(models.Model, HitCountMixin):
   author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
